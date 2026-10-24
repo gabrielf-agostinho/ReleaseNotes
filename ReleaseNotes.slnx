@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ReleaseNotes.Core/ReleaseNotes.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ReleaseNotes.Core.Tests/ReleaseNotes.Core.Tests.csproj" />
+  </Folder>
+</Solution>
