@@ -5,6 +5,7 @@ using ReleaseNotes.Web.Api;
 using ReleaseNotes.Web.Catalog;
 using ReleaseNotes.Web.ContentModel;
 using ReleaseNotes.Web.ContentModel.Migrations;
+using ReleaseNotes.Web.DemoContent;
 using ReleaseNotes.Web.Rendering.Controllers;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
@@ -28,5 +29,8 @@ public sealed class ReleaseNotesComposer : IComposer
         // Razor still encodes <, > and &; this stops it from turning every non-ASCII character
         // (·, –, accented names) into a numeric entity.
         builder.Services.Configure<WebEncoderOptions>(options => options.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
+
+        builder.Services.Configure<DemoContentOptions>(builder.Config.GetSection(DemoContentOptions.SectionName));
+        builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, DemoContentSeeder>();
     }
 }
