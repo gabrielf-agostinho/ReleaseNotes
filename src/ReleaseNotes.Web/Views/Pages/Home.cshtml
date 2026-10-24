@@ -1,0 +1,136 @@
+@model HomePageModel
+@{
+    ReleaseListItem? spotlight = Model.RecentReleases.FirstOrDefault();
+}
+<section class="hero">
+    <div class="container hero__inner">
+        <div class="hero__copy">
+            <p class="eyebrow">Changelog hub</p>
+            <h1 class="hero__title">@Model.HeroTitle</h1>
+            @if (Model.HeroText is not null)
+            {
+                <p class="hero__text">@Model.HeroText</p>
+            }
+            <div class="hero__actions">
+                @if (Model.Links.ChangelogUrl is not null)
+                {
+                    <a class="btn btn--primary" href="@Model.Links.ChangelogUrl">Browse the changelog<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a>
+                }
+                @if (Model.Links.ProductsUrl is not null)
+                {
+                    <a class="btn btn--secondary" href="@Model.Links.ProductsUrl">All products</a>
+                }
+            </div>
+            <dl class="stats">
+                <div><dt>Products</dt><dd>@Model.ProductCount</dd></div>
+                <div><dt>Releases</dt><dd>@Model.ReleaseCount</dd></div>
+                @if (Model.LastShipped is { } lastShipped)
+                {
+                    <div><dt>Last shipped</dt><dd><time datetime="@Display.IsoDate(lastShipped)">@Display.ShortDate(lastShipped)</time></dd></div>
+                }
+            </dl>
+        </div>
+
+        @if (spotlight is not null)
+        {
+            Release release = spotlight.Release;
+            <aside class="spotlight" aria-labelledby="spotlight-title">
+                <div class="spotlight__bar" aria-hidden="true"><span></span><span></span><span></span></div>
+                <div class="spotlight__body">
+                    <p class="spotlight__label">Just shipped</p>
+                    <h2 id="spotlight-title" class="spotlight__title">
+                        <a href="@release.Url">@release.Product.Name <span class="mono">@release.Version</span></a>
+                    </h2>
+                    <p class="spotlight__summary">@release.Summary</p>
+                    <ol class="spotlight__notes">
+                        @foreach (ReleaseNote note in release.Notes.Take(4))
+                        {
+                            <li class="spotlight__note spotlight__note--@note.Category.Slug()">
+                                <svg class="icon" aria-hidden="true"><use href="#i-@note.Category.Slug()" /></svg>
+                                <span>@note.Title</span>
+                            </li>
+                        }
+                    </ol>
+                    @if (release.Notes.Count > 4)
+                    {
+                        <a class="spotlight__more" href="@release.Url">+@(release.Notes.Count - 4) more changes<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a>
+                    }
+                </div>
+            </aside>
+        }
+    </div>
+</section>
+
+@if (Model.FeaturedProducts.Count > 0)
+{
+    <section class="section" aria-labelledby="featured-title">
+        <div class="container">
+            <header class="section__head">
+                <h2 id="featured-title" class="section__title">Featured products</h2>
+                @if (Model.Links.ProductsUrl is not null)
+                {
+                    <a class="link-arrow" href="@Model.Links.ProductsUrl">View all products<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a>
+                }
+            </header>
+            <div class="card-grid">
+                @foreach (ProductCard card in Model.FeaturedProducts)
+                {
+                    <partial name="~/Views/Shared/Components/_ProductCard.cshtml" model="card" />
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<section class="section section--tinted" aria-labelledby="recent-title">
+    <div class="container container--narrow">
+        <header class="section__head">
+            <h2 id="recent-title" class="section__title">Recent releases</h2>
+            @if (Model.Links.ChangelogUrl is not null)
+            {
+                <a class="link-arrow" href="@Model.Links.ChangelogUrl">Full history<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a>
+            }
+        </header>
+        @if (Model.RecentReleases.Count == 0)
+        {
+            <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model='new EmptyState("No releases published yet", "Releases appear here as soon as they are published in the backoffice.", "/umbraco", "Open the backoffice")' />
+        }
+        else
+        {
+            <ol class="timeline">
+                @foreach (ReleaseListItem item in Model.RecentReleases)
+                {
+                    <partial name="~/Views/Shared/Components/_ReleaseItem.cshtml" model="(item, true)" />
+                }
+            </ol>
+        }
+    </div>
+</section>
+
+<section class="section" aria-labelledby="api-title">
+    <div class="container api-callout">
+        <div class="api-callout__copy">
+            <p class="eyebrow">For automation</p>
+            <h2 id="api-title" class="section__title">The same history, as JSON</h2>
+            <p>Feed release notes into dashboards, bots or upgrade checks. The Release Notes API filters by product, change type and period; Umbraco's Content Delivery API exposes the underlying content.</p>
+            <ul class="api-callout__links">
+                <li><a class="link-arrow" href="/api/v1/releases?breaking=true">Breaking releases<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
+                <li><a class="link-arrow" href="/api/v1/products">Products with latest versions<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
+            </ul>
+        </div>
+        <figure class="code-block" aria-label="Example request">
+            <figcaption class="code-block__caption">GET /api/v1/releases</figcaption>
+<pre><code><span class="tok-cmd">curl</span> <span class="tok-str">"/api/v1/releases?product=lumen&amp;category=breaking"</span>
+
+{
+  <span class="tok-key">"items"</span>: [{
+    <span class="tok-key">"version"</span>: <span class="tok-str">"2.0.0"</span>,
+    <span class="tok-key">"releaseDate"</span>: <span class="tok-str">"2026-06-30"</span>,
+    <span class="tok-key">"hasBreakingChanges"</span>: <span class="tok-bool">true</span>,
+    <span class="tok-key">"changes"</span>: [{ <span class="tok-key">"category"</span>: <span class="tok-str">"breaking"</span>, <span class="tok-key">"count"</span>: <span class="tok-num">2</span> }]
+  }],
+  <span class="tok-key">"page"</span>: <span class="tok-num">1</span>, <span class="tok-key">"totalPages"</span>: <span class="tok-num">1</span>
+}</code></pre>
+        </figure>
+    </div>
+</section>

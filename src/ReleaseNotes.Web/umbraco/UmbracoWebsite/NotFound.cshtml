@@ -1,0 +1,8 @@
+@using ReleaseNotes.Web.Catalog
+@using ReleaseNotes.Web.Rendering
+@inject PublishedCatalogReader CatalogReader
+@*
+    Overrides Umbraco's built-in "page not found" view (rendered for any URL that matches no published
+    content) so visitors get the site's own 404 page, with its layout and navigation.
+*@
+@await Html.PartialAsync("~/Views/Pages/NotFound.cshtml", NotFoundPageModel.Create(CatalogReader.GetSnapshot().Links))

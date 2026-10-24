@@ -1,0 +1,18 @@
+@model NotFoundPageModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<section class="error-page" aria-labelledby="error-title">
+    <div class="container container--narrow">
+        <p class="error-page__code mono" aria-hidden="true">404</p>
+        <h1 id="error-title" class="error-page__title">This page is not in the changelog</h1>
+        <p class="error-page__text">It may have been unpublished, renamed or never existed. Releases keep their address once they are published, so an old link usually means the product was renamed.</p>
+        <ul class="error-page__links">
+            <li><a class="btn btn--primary" href="@Model.Links.HomeUrl">Go to the home page</a></li>
+            @if (Model.Links.ChangelogUrl is not null)
+            {
+                <li><a class="btn btn--secondary" href="@Model.Links.ChangelogUrl">Browse all releases</a></li>
+            }
+        </ul>
+    </div>
+</section>

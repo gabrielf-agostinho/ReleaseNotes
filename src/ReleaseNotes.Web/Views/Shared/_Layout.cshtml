@@ -1,0 +1,102 @@
+@model SitePageModel
+@{
+    const string siteName = "Release Notes";
+    PageMeta meta = Model.Meta;
+    SiteLinks links = Model.Links;
+    HttpRequest request = Context.Request;
+    string Absolute(string url) => request.ToAbsolute(url);
+    var isHome = Model is HomePageModel;
+    var documentTitle = isHome ? meta.Title : $"{meta.Title} · {siteName}";
+    var canonical = Absolute(meta.CanonicalPath);
+    string? Current(string section) => Model.Section == section ? "page" : null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@documentTitle</title>
+    <meta name="description" content="@meta.Description" />
+    <link rel="canonical" href="@canonical" />
+    @if (meta.NoIndex)
+    {
+        <meta name="robots" content="noindex, follow" />
+    }
+    <meta property="og:site_name" content="@siteName" />
+    <meta property="og:type" content="@meta.OpenGraphType" />
+    <meta property="og:title" content="@meta.Title" />
+    <meta property="og:description" content="@meta.Description" />
+    <meta property="og:url" content="@canonical" />
+    @if (meta.ImageUrl is not null)
+    {
+        <meta property="og:image" content="@Absolute(meta.ImageUrl)" />
+    }
+    <meta name="twitter:card" content="summary" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <partial name="~/Views/Shared/Components/_Icons.cshtml" />
+
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <a class="brand" href="@links.HomeUrl" aria-label="@siteName home">
+                <span class="brand__mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" width="28" height="28"><rect width="32" height="32" rx="9" fill="currentColor" /><path d="M9 10.5h14M9 16h9M9 21.5h11" stroke="#fff" stroke-width="2.6" stroke-linecap="round" /></svg>
+                </span>
+                <span class="brand__name">release<span>notes</span></span>
+            </a>
+            <nav class="site-nav" aria-label="Main">
+                <ul>
+                    @if (links.ProductsUrl is not null)
+                    {
+                        <li><a href="@links.ProductsUrl" aria-current="@Current("products")">Products</a></li>
+                    }
+                    @if (links.ChangelogUrl is not null)
+                    {
+                        <li><a href="@links.ChangelogUrl" aria-current="@Current("changelog")">Changelog</a></li>
+                    }
+                    <li><a href="/api/v1/releases" class="site-nav__api"><svg class="icon" aria-hidden="true"><use href="#i-code" /></svg>API</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container site-footer__inner">
+            <div class="site-footer__about">
+                <p class="brand brand--small"><span class="brand__name">release<span>notes</span></span></p>
+                <p>Product changelogs managed in Umbraco and published as pages, a JSON API and a sitemap.</p>
+            </div>
+            <nav aria-label="Footer">
+                <ul class="site-footer__links">
+                    @if (links.ProductsUrl is not null)
+                    {
+                        <li><a href="@links.ProductsUrl">Products</a></li>
+                    }
+                    @if (links.ChangelogUrl is not null)
+                    {
+                        <li><a href="@links.ChangelogUrl">Changelog</a></li>
+                    }
+                    <li><a href="/api/v1/releases">Release Notes API</a></li>
+                    <li><a href="/umbraco/delivery/api/v2/content">Content Delivery API</a></li>
+                    <li><a href="/sitemap.xml">Sitemap</a></li>
+                    <li><a href="/umbraco">Backoffice</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="container site-footer__legal">
+            <p>Demo content is fictional. Built with Umbraco 17 LTS and .NET 10.</p>
+        </div>
+    </footer>
+</body>
+</html>

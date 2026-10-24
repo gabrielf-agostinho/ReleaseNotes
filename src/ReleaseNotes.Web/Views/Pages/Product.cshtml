@@ -1,0 +1,97 @@
+@model ProductPageModel
+@{
+    Product product = Model.Product;
+    Release? latest = Model.LatestRelease;
+}
+<div class="page-head page-head--product">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+                @if (Model.Links.ProductsUrl is not null)
+                {
+                    <li><a href="@Model.Links.ProductsUrl">Products</a></li>
+                }
+                <li><a href="@product.Url" aria-current="page">@product.Name</a></li>
+            </ol>
+        </nav>
+        <div class="product-hero">
+            <partial name="~/Views/Shared/Components/_ProductLogo.cshtml" model='(product, "lg")' />
+            <div class="product-hero__copy">
+                <h1 class="page-head__title">
+                    @product.Name
+                    @if (product.Lifecycle != ProductLifecycle.Active)
+                    {
+                        <span class="badge badge--lifecycle badge--@product.Lifecycle.ToString().ToLowerInvariant()">@product.Lifecycle.Label()</span>
+                    }
+                </h1>
+                <p class="page-head__intro">@product.Tagline</p>
+                @if (product.WebsiteUrl is not null || product.RepositoryUrl is not null)
+                {
+                    <ul class="link-list">
+                        @if (product.WebsiteUrl is not null)
+                        {
+                            <li><a href="@product.WebsiteUrl" rel="external noopener"><svg class="icon" aria-hidden="true"><use href="#i-globe" /></svg>Website</a></li>
+                        }
+                        @if (product.RepositoryUrl is not null)
+                        {
+                            <li><a href="@product.RepositoryUrl" rel="external noopener"><svg class="icon" aria-hidden="true"><use href="#i-code" /></svg>Repository</a></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container product-layout">
+    <div class="product-layout__main">
+        @if (product.DescriptionHtml is not null)
+        {
+            <section class="prose product-description" aria-label="About @product.Name">
+                @Html.Raw(product.DescriptionHtml)
+            </section>
+        }
+
+        <section aria-labelledby="history-title">
+            <header class="section__head">
+                <h2 id="history-title" class="section__title">Release history</h2>
+                <p class="section__meta" aria-live="polite">@Display.Plural(Model.Releases.TotalItems, "release", "releases")</p>
+            </header>
+            @if (Model.Releases.TotalItems == 0)
+            {
+                <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model='new EmptyState("No releases yet", $"{product.Name} has not published a release. Check back soon.", Model.Links.ChangelogUrl, "Browse the changelog")' />
+            }
+            else if (Model.Releases.Items.Count == 0)
+            {
+                <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model='new EmptyState("This page is past the end of the history", $"{product.Name} has {Model.Releases.TotalPages} pages of releases.", product.Url, "Go to the latest releases")' />
+            }
+            else
+            {
+                <ol class="timeline">
+                    @foreach (ReleaseListItem item in Model.Releases.Items)
+                    {
+                        <partial name="~/Views/Shared/Components/_ReleaseItem.cshtml" model="(item, false)" />
+                    }
+                </ol>
+                <partial name="~/Views/Shared/Components/_Pagination.cshtml" model="Model.Pagination" />
+            }
+        </section>
+    </div>
+
+    @if (latest is not null)
+    {
+        <aside class="product-layout__aside" aria-labelledby="latest-title">
+            <div class="latest-card">
+                <p class="latest-card__label" id="latest-title">Latest version</p>
+                <p class="latest-card__version"><a href="@latest.Url" class="mono">@latest.Version</a></p>
+                <p class="latest-card__date">
+                    <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
+                    <time datetime="@Display.IsoDate(latest.ReleaseDate)">@Display.LongDate(latest.ReleaseDate)</time>
+                </p>
+                <p class="latest-card__summary">@latest.Summary</p>
+                <partial name="~/Views/Shared/Components/_ChangeCounts.cshtml" model="latest" />
+                <a class="btn btn--primary btn--block" href="@latest.Url">Read the release notes</a>
+            </div>
+        </aside>
+    }
+</div>

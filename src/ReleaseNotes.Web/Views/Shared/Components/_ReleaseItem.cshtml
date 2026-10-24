@@ -1,0 +1,36 @@
+@model (ReleaseListItem Item, bool ShowProduct)
+@{
+    Release release = Model.Item.Release;
+    Product? product = Model.Item.Product;
+}
+<li class="timeline__item timeline__item--@release.Type.CssModifier()@(release.HasBreakingChanges ? " timeline__item--breaking" : "")">
+    <span class="timeline__marker" aria-hidden="true"></span>
+    <article class="release-card">
+        <header class="release-card__head">
+            @if (Model.ShowProduct && product is not null)
+            {
+                <span class="release-card__product">
+                    <partial name="~/Views/Shared/Components/_ProductLogo.cshtml" model='(product, "xs")' />
+                    @product.Name
+                </span>
+            }
+            <h3 class="release-card__title">
+                <a class="stretched-link" href="@release.Url">
+                    <span class="visually-hidden">@release.Product.Name </span><span class="mono">@release.Version</span>
+                </a>
+            </h3>
+            <span class="badge badge--@release.Type.CssModifier()">@release.Type</span>
+            @if (Model.Item.IsLatest)
+            {
+                <span class="badge badge--latest">Latest</span>
+            }
+            @if (release.HasBreakingChanges)
+            {
+                <span class="badge badge--breaking"><svg class="icon" aria-hidden="true"><use href="#i-breaking" /></svg>Breaking</span>
+            }
+            <time class="release-card__date" datetime="@Display.IsoDate(release.ReleaseDate)">@Display.ShortDate(release.ReleaseDate)</time>
+        </header>
+        <p class="release-card__summary">@release.Summary</p>
+        <partial name="~/Views/Shared/Components/_ChangeCounts.cshtml" model="release" />
+    </article>
+</li>

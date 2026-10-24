@@ -1,0 +1,10 @@
+@model (Product Product, string Size)
+@* Decorative: the product name is always rendered next to the logo, so the image has an empty alt. *@
+@if (Model.Product.LogoUrl is { } logoUrl)
+{
+    <img class="logo logo--@Model.Size" src="@logoUrl" alt="" width="64" height="64" loading="lazy" decoding="async" />
+}
+else
+{
+    <span class="logo logo--@Model.Size logo--monogram" style="--hue: @Display.Hue(Model.Product.Slug)" aria-hidden="true">@Model.Product.Name[..1]</span>
+}

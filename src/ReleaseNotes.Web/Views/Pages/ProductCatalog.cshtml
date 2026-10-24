@@ -1,0 +1,28 @@
+@model ProductCatalogPageModel
+<div class="page-head">
+    <div class="container">
+        <h1 class="page-head__title">@Model.Title</h1>
+        @if (Model.Intro is not null)
+        {
+            <p class="page-head__intro">@Model.Intro</p>
+        }
+    </div>
+</div>
+
+<section class="section section--flush" aria-label="Products">
+    <div class="container">
+        @if (Model.Products.Count == 0)
+        {
+            <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model='new EmptyState("No products published yet", "Products appear here once they are published in the backoffice.", Model.Links.HomeUrl, "Back to home")' />
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (ProductCard card in Model.Products)
+                {
+                    <partial name="~/Views/Shared/Components/_ProductCard.cshtml" model="card" />
+                }
+            </div>
+        }
+    </div>
+</section>

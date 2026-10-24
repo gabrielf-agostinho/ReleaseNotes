@@ -1,0 +1,18 @@
+@model EmptyState
+<div class="empty-state">
+    <svg class="empty-state__art" viewBox="0 0 160 112" aria-hidden="true">
+        <rect x="34" y="14" width="92" height="22" rx="7" class="empty-state__card empty-state__card--back" />
+        <rect x="22" y="40" width="116" height="28" rx="8" class="empty-state__card" />
+        <rect x="34" y="50" width="38" height="8" rx="4" class="empty-state__line" />
+        <rect x="78" y="50" width="22" height="8" rx="4" class="empty-state__line empty-state__line--accent" />
+        <rect x="22" y="74" width="116" height="28" rx="8" class="empty-state__card empty-state__card--dashed" />
+        <circle cx="128" cy="22" r="13" class="empty-state__badge" />
+        <path d="M123 22h10" class="empty-state__badge-mark" />
+    </svg>
+    <h2 class="empty-state__title">@Model.Title</h2>
+    <p class="empty-state__text">@Model.Text</p>
+    @if (Model.ActionUrl is not null)
+    {
+        <a class="btn btn--secondary" href="@Model.ActionUrl">@Model.ActionLabel</a>
+    }
+</div>

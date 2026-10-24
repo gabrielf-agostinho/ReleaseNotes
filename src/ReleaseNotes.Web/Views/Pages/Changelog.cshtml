@@ -1,0 +1,154 @@
+@model ChangelogPageModel
+@{
+    ReleaseFilter filter = Model.Filter;
+    var path = Model.Path;
+    PagedResult<ReleaseListItem> releases = Model.Releases;
+    string? Invalid(string key) => Model.HasError(key) ? "true" : null;
+    string? Describe(string key) => Model.HasError(key) ? $"error-{key}" : null;
+    string Without(string key) => Model.UrlWithout(key);
+}
+<div class="page-head">
+    <div class="container">
+        <h1 class="page-head__title">@Model.Title</h1>
+        @if (Model.Intro is not null)
+        {
+            <p class="page-head__intro">@Model.Intro</p>
+        }
+    </div>
+</div>
+
+<div class="container changelog-layout">
+    <form class="filters" method="get" action="@path" role="search" aria-label="Filter releases" data-busy-form>
+        <div class="field">
+            <label for="filter-product">Product</label>
+            <select id="filter-product" name="product" aria-invalid="@Invalid("product")" aria-describedby="@Describe("product")">
+                <option value="">All products</option>
+                @foreach (Product product in Model.Products)
+                {
+                    <option value="@product.Slug" selected="@(string.Equals(filter.ProductSlug, product.Slug, StringComparison.OrdinalIgnoreCase))">@product.Name</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="filter-category">Type of change</label>
+            <select id="filter-category" name="category" aria-invalid="@Invalid("category")" aria-describedby="@Describe("category")">
+                <option value="">All changes</option>
+                @foreach (ChangeCategory category in ChangeCategories.All)
+                {
+                    <option value="@category.Slug()" selected="@(filter.Category == category)">@category.FilterLabel()</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="filter-from">From</label>
+            <input id="filter-from" type="date" name="from" value="@(filter.From is { } from ? Display.IsoDate(from) : null)" aria-invalid="@Invalid("from")" aria-describedby="@Describe("from")" />
+        </div>
+        <div class="field">
+            <label for="filter-to">To</label>
+            <input id="filter-to" type="date" name="to" value="@(filter.To is { } to ? Display.IsoDate(to) : null)" aria-invalid="@Invalid("to")" aria-describedby="@Describe("to")" />
+        </div>
+        <div class="field field--check">
+            <input id="filter-breaking" type="checkbox" name="breaking" value="true" checked="@filter.BreakingOnly" />
+            <label for="filter-breaking">Only releases with breaking changes</label>
+        </div>
+        <div class="filters__actions">
+            <button type="submit" class="btn btn--primary">Apply filters</button>
+            @if (filter.HasCriteria || Model.Errors.Count > 0)
+            {
+                <a class="btn btn--ghost" href="@path">Reset</a>
+            }
+        </div>
+    </form>
+
+    <section class="changelog-results" aria-labelledby="results-title" data-busy-target>
+        <h2 id="results-title" class="visually-hidden">Releases</h2>
+
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="alert alert--error" role="alert">
+                <svg class="icon alert__icon" aria-hidden="true"><use href="#i-breaking" /></svg>
+                <div>
+                    <p class="alert__title">Some filters could not be applied</p>
+                    <ul>
+                        @foreach (KeyValuePair<string, string> error in Model.Errors)
+                        {
+                            <li id="error-@error.Key">@error.Value</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
+        <div class="results-bar">
+            <p class="results-bar__count" aria-live="polite">
+                @if (releases.TotalItems == 0)
+                {
+                    <text>No releases</text>
+                }
+                else
+                {
+                    <text>Showing <strong>@Model.FirstShown–@Model.LastShown</strong> of <strong>@releases.TotalItems</strong> @(releases.TotalItems == 1 ? "release" : "releases")</text>
+                }
+            </p>
+            @if (filter.HasCriteria)
+            {
+                <ul class="active-filters" aria-label="Active filters">
+                    @if (filter.ProductSlug is not null)
+                    {
+                        <li><a class="filter-chip" href="@Without("product")">@(Model.Products.FirstOrDefault(p => p.Slug == filter.ProductSlug)?.Name ?? filter.ProductSlug)<svg class="icon" aria-hidden="true"><use href="#i-x" /></svg><span class="visually-hidden"> (remove filter)</span></a></li>
+                    }
+                    @if (filter.Category is { } activeCategory)
+                    {
+                        <li><a class="filter-chip" href="@Without("category")">@activeCategory.FilterLabel()<svg class="icon" aria-hidden="true"><use href="#i-x" /></svg><span class="visually-hidden"> (remove filter)</span></a></li>
+                    }
+                    @if (filter.From is { } activeFrom)
+                    {
+                        <li><a class="filter-chip" href="@Without("from")">From @Display.ShortDate(activeFrom)<svg class="icon" aria-hidden="true"><use href="#i-x" /></svg><span class="visually-hidden"> (remove filter)</span></a></li>
+                    }
+                    @if (filter.To is { } activeTo)
+                    {
+                        <li><a class="filter-chip" href="@Without("to")">Until @Display.ShortDate(activeTo)<svg class="icon" aria-hidden="true"><use href="#i-x" /></svg><span class="visually-hidden"> (remove filter)</span></a></li>
+                    }
+                    @if (filter.BreakingOnly)
+                    {
+                        <li><a class="filter-chip" href="@Without("breaking")">Breaking only<svg class="icon" aria-hidden="true"><use href="#i-x" /></svg><span class="visually-hidden"> (remove filter)</span></a></li>
+                    }
+                </ul>
+            }
+        </div>
+
+        @if (releases.TotalItems == 0)
+        {
+            var empty = filter.HasCriteria
+                ? new EmptyState("No releases match these filters", "Try a wider period or remove a filter.", path, "Clear all filters")
+                : new EmptyState("No releases published yet", "Published releases of every product will be listed here.", Model.Links.HomeUrl, "Back to home");
+            <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model="empty" />
+        }
+        else if (releases.Items.Count == 0)
+        {
+            <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model='new EmptyState("This page is past the end of the results", $"There are {releases.TotalPages} pages for these filters.", Model.Pagination.Pages.FirstOrDefault()?.Url ?? path, "Go to the first page")' />
+        }
+        else
+        {
+            @foreach (IGrouping<DateOnly, ReleaseListItem> month in Model.ReleasesByMonth)
+            {
+                <section class="month" aria-labelledby="month-@Display.IsoDate(month.Key)">
+                    <h3 class="month__title" id="month-@Display.IsoDate(month.Key)">@Display.Month(month.Key)</h3>
+                    <ol class="timeline">
+                        @foreach (ReleaseListItem item in month)
+                        {
+                            <partial name="~/Views/Shared/Components/_ReleaseItem.cshtml" model="(item, true)" />
+                        }
+                    </ol>
+                </section>
+            }
+            <partial name="~/Views/Shared/Components/_Pagination.cshtml" model="Model.Pagination" />
+        }
+
+        <div class="loading" aria-hidden="true">
+            <span class="loading__bar"></span>
+            <span class="loading__bar"></span>
+            <span class="loading__bar"></span>
+        </div>
+    </section>
+</div>

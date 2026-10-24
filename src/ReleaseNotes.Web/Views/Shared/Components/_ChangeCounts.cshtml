@@ -1,0 +1,13 @@
+@model Release
+@if (Model.CategoryCounts.Count > 0)
+{
+    <ul class="change-counts" aria-label="Changes in this release">
+        @foreach (CategoryCount count in Model.CategoryCounts)
+        {
+            <li class="chip chip--@count.Category.Slug()">
+                <svg class="icon" aria-hidden="true"><use href="#i-@count.Category.Slug()" /></svg>
+                @count.Category.Count(count.Count)
+            </li>
+        }
+    </ul>
+}

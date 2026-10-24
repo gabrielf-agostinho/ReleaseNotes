@@ -1,0 +1,38 @@
+@model ProductCard
+@{
+    Product product = Model.Product;
+    Release? latest = Model.LatestRelease;
+}
+<article class="product-card">
+    <div class="product-card__head">
+        <partial name="~/Views/Shared/Components/_ProductLogo.cshtml" model='(product, "md")' />
+        <div>
+            <h3 class="product-card__name"><a class="stretched-link" href="@product.Url">@product.Name</a></h3>
+            @if (product.Lifecycle != ProductLifecycle.Active)
+            {
+                <span class="badge badge--lifecycle badge--@product.Lifecycle.ToString().ToLowerInvariant()">@product.Lifecycle.Label()</span>
+            }
+        </div>
+    </div>
+    <p class="product-card__tagline">@product.Tagline</p>
+    <dl class="product-card__meta">
+        @if (latest is not null)
+        {
+            <div>
+                <dt>Latest</dt>
+                <dd><span class="mono">@latest.Version</span> · <time datetime="@Display.IsoDate(latest.ReleaseDate)">@Display.ShortDate(latest.ReleaseDate)</time></dd>
+            </div>
+        }
+        else
+        {
+            <div>
+                <dt>Latest</dt>
+                <dd>No releases yet</dd>
+            </div>
+        }
+        <div>
+            <dt>History</dt>
+            <dd>@Display.Plural(Model.ReleaseCount, "release", "releases")</dd>
+        </div>
+    </dl>
+</article>

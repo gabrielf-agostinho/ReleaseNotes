@@ -1,0 +1,31 @@
+@model Pagination
+@if (Model.IsVisible)
+{
+    <nav class="pagination" aria-label="Pagination">
+        @if (Model.PreviousUrl is not null)
+        {
+            <a class="pagination__step" href="@Model.PreviousUrl" rel="prev"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>Newer</a>
+        }
+        <ol class="pagination__pages">
+            @foreach (PageLink? link in Model.Pages)
+            {
+                if (link is null)
+                {
+                    <li class="pagination__gap" aria-hidden="true">…</li>
+                }
+                else if (link.IsCurrent)
+                {
+                    <li><a href="@link.Url" aria-current="page"><span class="visually-hidden">Page </span>@link.Number</a></li>
+                }
+                else
+                {
+                    <li><a href="@link.Url"><span class="visually-hidden">Page </span>@link.Number</a></li>
+                }
+            }
+        </ol>
+        @if (Model.NextUrl is not null)
+        {
+            <a class="pagination__step" href="@Model.NextUrl" rel="next">Older<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a>
+        }
+    </nav>
+}

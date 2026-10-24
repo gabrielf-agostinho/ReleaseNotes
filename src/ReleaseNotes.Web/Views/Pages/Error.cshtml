@@ -1,0 +1,15 @@
+@model ErrorPageModel
+<section class="error-page" aria-labelledby="error-title">
+    <div class="container container--narrow">
+        <p class="error-page__code mono" aria-hidden="true">500</p>
+        <h1 id="error-title" class="error-page__title">Something went wrong on our side</h1>
+        <p class="error-page__text">The error has been logged. Try again in a moment, or continue from one of the pages below.</p>
+        <ul class="error-page__links">
+            <li><a class="btn btn--primary" href="@Model.Links.HomeUrl">Go to the home page</a></li>
+            @if (Model.Links.ChangelogUrl is not null)
+            {
+                <li><a class="btn btn--secondary" href="@Model.Links.ChangelogUrl">Browse all releases</a></li>
+            }
+        </ul>
+    </div>
+</section>

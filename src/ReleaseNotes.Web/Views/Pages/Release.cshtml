@@ -1,0 +1,184 @@
+@model ReleasePageModel
+@{
+    Release release = Model.Release;
+    Product product = Model.Product;
+    IReadOnlyList<ReleaseNoteGroup> groups = release.NoteGroups;
+    var breakingCount = release.Notes.Count(n => n.Category == ChangeCategory.Breaking);
+    string GroupId(ChangeCategory category) => category.Slug();
+}
+<article class="release" aria-labelledby="release-title">
+    <header class="release-hero@(release.HasBreakingChanges ? " release-hero--breaking" : "")">
+        <div class="container">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <ol>
+                    @if (Model.Links.ProductsUrl is not null)
+                    {
+                        <li><a href="@Model.Links.ProductsUrl">Products</a></li>
+                    }
+                    <li><a href="@product.Url">@product.Name</a></li>
+                    <li><a href="@release.Url" aria-current="page">@release.Version</a></li>
+                </ol>
+            </nav>
+
+            <div class="release-hero__heading">
+                <partial name="~/Views/Shared/Components/_ProductLogo.cshtml" model='(product, "md")' />
+                <h1 id="release-title" class="release-hero__title">
+                    <span class="release-hero__product">@product.Name</span>
+                    <span class="release-hero__version"><span class="release-hero__v" aria-hidden="true">v</span>@release.Version</span>
+                </h1>
+            </div>
+
+            <ul class="release-hero__meta">
+                <li><span class="badge badge--@release.Type.CssModifier()">@release.Type.Label()</span></li>
+                @if (Model.IsLatest)
+                {
+                    <li><span class="badge badge--latest">Latest</span></li>
+                }
+                @if (release.Version.IsPreRelease)
+                {
+                    <li><span class="badge badge--prerelease">Pre-release</span></li>
+                }
+                <li class="release-hero__date">
+                    <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
+                    <span class="visually-hidden">Released on </span><time datetime="@Display.IsoDate(release.ReleaseDate)">@Display.LongDate(release.ReleaseDate)</time>
+                </li>
+            </ul>
+
+            <p class="release-hero__summary">@release.Summary</p>
+
+            @if (groups.Count > 0)
+            {
+                <ul class="release-hero__chips" aria-label="Jump to a category">
+                    @foreach (ReleaseNoteGroup group in groups)
+                    {
+                        <li>
+                            <a class="chip chip--@group.Category.Slug() chip--link" href="#@GroupId(group.Category)">
+                                <svg class="icon" aria-hidden="true"><use href="#i-@group.Category.Slug()" /></svg>
+                                @group.Category.Count(group.Notes.Count)
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </header>
+
+    <div class="container release-layout">
+        <div class="release-layout__main">
+            @if (release.HasBreakingChanges)
+            {
+                <aside class="callout callout--breaking" aria-labelledby="breaking-callout-title">
+                    <svg class="icon callout__icon" aria-hidden="true"><use href="#i-breaking" /></svg>
+                    <div>
+                        <h2 id="breaking-callout-title" class="callout__title">This release contains breaking changes</h2>
+                        <p>
+                            @if (breakingCount > 0)
+                            {
+                                <text>Review the <a href="#@GroupId(ChangeCategory.Breaking)">@ChangeCategory.Breaking.Count(breakingCount)</a> before upgrading from an earlier version.</text>
+                            }
+                            else
+                            {
+                                <text>Some changes are not backwards compatible. Read all notes before upgrading.</text>
+                            }
+                            @if (release.ExternalUrl is not null)
+                            {
+                                <text> The <a href="@release.ExternalUrl" rel="external noopener">upgrade guide</a> has step-by-step instructions.</text>
+                            }
+                        </p>
+                    </div>
+                </aside>
+            }
+
+            @if (groups.Count == 0)
+            {
+                <partial name="~/Views/Shared/Components/_EmptyState.cshtml" model='new EmptyState("No notes for this release yet", "The summary above is all that has been published so far.", product.Url, $"All {product.Name} releases")' />
+            }
+
+            @foreach (ReleaseNoteGroup group in groups)
+            {
+                var slug = group.Category.Slug();
+                <section class="note-group note-group--@slug" id="@GroupId(group.Category)" aria-labelledby="@slug-title">
+                    <h2 class="note-group__title" id="@slug-title">
+                        <span class="note-group__icon" aria-hidden="true"><svg class="icon"><use href="#i-@slug" /></svg></span>
+                        @group.Category.Heading()
+                        <span class="note-group__count">@group.Notes.Count</span>
+                    </h2>
+                    <ol class="notes">
+                        @for (var i = 0; i < group.Notes.Count; i++)
+                        {
+                            ReleaseNote note = group.Notes[i];
+                            var noteId = $"{slug}-{i + 1}";
+                            <li class="note" id="@noteId">
+                                <h3 class="note__title">
+                                    @note.Title
+                                    <a class="note__permalink" href="#@noteId"><span class="visually-hidden">Link to this change</span><svg class="icon" aria-hidden="true"><use href="#i-link" /></svg></a>
+                                </h3>
+                                @if (note.DescriptionHtml is not null)
+                                {
+                                    <div class="note__body prose">@Html.Raw(note.DescriptionHtml)</div>
+                                }
+                            </li>
+                        }
+                    </ol>
+                </section>
+            }
+
+            @if (Model.Neighbours.Older is not null || Model.Neighbours.Newer is not null)
+            {
+                <nav class="release-pager" aria-label="@product.Name releases">
+                    @if (Model.Neighbours.Older is { } older)
+                    {
+                        <a class="release-pager__link release-pager__link--older" href="@older.Url" rel="prev">
+                            <span class="release-pager__label"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>Previous release</span>
+                            <span class="release-pager__version mono">@older.Version</span>
+                            <time datetime="@Display.IsoDate(older.ReleaseDate)">@Display.ShortDate(older.ReleaseDate)</time>
+                        </a>
+                    }
+                    @if (Model.Neighbours.Newer is { } newer)
+                    {
+                        <a class="release-pager__link release-pager__link--newer" href="@newer.Url" rel="next">
+                            <span class="release-pager__label">Next release<svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+                            <span class="release-pager__version mono">@newer.Version</span>
+                            <time datetime="@Display.IsoDate(newer.ReleaseDate)">@Display.ShortDate(newer.ReleaseDate)</time>
+                        </a>
+                    }
+                </nav>
+            }
+        </div>
+
+        <aside class="release-layout__aside">
+            <div class="toc">
+                @if (groups.Count > 0)
+                {
+                    <nav aria-labelledby="toc-title">
+                        <p class="toc__title" id="toc-title">In this release</p>
+                        <ol class="toc__list">
+                            @foreach (ReleaseNoteGroup group in groups)
+                            {
+                                <li>
+                                    <a class="toc__link toc__link--@group.Category.Slug()" href="#@GroupId(group.Category)">
+                                        <svg class="icon" aria-hidden="true"><use href="#i-@group.Category.Slug()" /></svg>
+                                        <span>@group.Category.Heading()</span>
+                                        <span class="toc__count">@group.Notes.Count</span>
+                                    </a>
+                                </li>
+                            }
+                        </ol>
+                    </nav>
+                }
+                <ul class="toc__actions">
+                    @if (release.ExternalUrl is not null)
+                    {
+                        <li><a href="@release.ExternalUrl" rel="external noopener"><svg class="icon" aria-hidden="true"><use href="#i-external" /></svg>Release announcement</a></li>
+                    }
+                    <li><a href="@product.Url"><svg class="icon" aria-hidden="true"><use href="#i-layers" /></svg>All @product.Name releases</a></li>
+                    <li>
+                        <button type="button" class="copy-link" data-copy-url hidden>
+                            <svg class="icon" aria-hidden="true"><use href="#i-link" /></svg><span data-copy-label>Copy link to this release</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</article>
