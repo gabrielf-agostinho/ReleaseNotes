@@ -1,5 +1,7 @@
 # Release Notes CMS
 
+[![CI](https://github.com/gabrielf-agostinho/ReleaseNotes/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gabrielf-agostinho/ReleaseNotes/actions/workflows/ci.yml)
+
 A changelog site for software products, built on Umbraco 17 (LTS) and .NET 10. Editors manage products,
 releases and release notes in the Umbraco backoffice; the public site lists them with filters, and a small
 JSON API exposes the same data.
