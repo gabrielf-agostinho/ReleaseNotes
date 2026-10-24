@@ -1,6 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Microsoft.Extensions.WebEncoders;
+using ReleaseNotes.Web.Api;
 using ReleaseNotes.Web.Catalog;
 using ReleaseNotes.Web.ContentModel;
 using ReleaseNotes.Web.ContentModel.Migrations;
@@ -21,6 +22,7 @@ public sealed class ReleaseNotesComposer : IComposer
 
         builder.Services.AddScoped<PublishedCatalogReader>();
         builder.Services.AddScoped<SitePageDependencies>();
+        builder.Services.ConfigureOptions<ChangelogApiSwaggerOptions>();
         builder.Services.AddHealthChecks();
 
         // Razor still encodes <, > and &; this stops it from turning every non-ASCII character
