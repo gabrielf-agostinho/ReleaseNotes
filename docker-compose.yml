@@ -1,0 +1,43 @@
+# Local demo: Umbraco with an embedded SQLite database, served over plain HTTP on localhost.
+#   cp .env.example .env   # then fill in the values
+#   docker compose up --build
+# Site: http://localhost:8080   Backoffice: http://localhost:8080/umbraco
+name: releasenotes
+
+services:
+  web:
+    build: .
+    image: releasenotes-cms:local
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__umbracoDbDSN: "Data Source=/app/umbraco/Data/Umbraco.sqlite.db;Cache=Shared;Foreign Keys=True;Pooling=True"
+      ConnectionStrings__umbracoDbDSN_ProviderName: Microsoft.Data.Sqlite
+      # First start installs Umbraco unattended with this administrator.
+      Umbraco__CMS__Unattended__InstallUnattended: "true"
+      Umbraco__CMS__Unattended__UnattendedUserName: ${UMBRACO_ADMIN_NAME:-Administrator}
+      Umbraco__CMS__Unattended__UnattendedUserEmail: ${UMBRACO_ADMIN_EMAIL:?Set UMBRACO_ADMIN_EMAIL in .env}
+      Umbraco__CMS__Unattended__UnattendedUserPassword: ${UMBRACO_ADMIN_PASSWORD:?Set UMBRACO_ADMIN_PASSWORD in .env}
+      Umbraco__CMS__Imaging__HMACSecretKey: ${UMBRACO_HMAC_SECRET_KEY:?Set UMBRACO_HMAC_SECRET_KEY in .env}
+      Umbraco__CMS__WebRouting__UmbracoApplicationUrl: http://localhost:8080
+      # The backoffice login requires HTTPS unless this is false. Acceptable for a localhost demo only:
+      # anywhere else, terminate TLS in front of the container and remove this line.
+      Umbraco__CMS__Global__UseHttps: "false"
+      ReleaseNotes__DemoContent__Enabled: ${RELEASENOTES_DEMO_CONTENT:-true}
+    volumes:
+      - umbraco-data:/app/umbraco/Data
+      - umbraco-logs:/app/umbraco/Logs
+      - umbraco-media:/app/wwwroot/media
+    healthcheck:
+      # The runtime image has no curl; bash's /dev/tcp is enough for a plain HTTP probe.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /healthz HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+
+volumes:
+  umbraco-data:
+  umbraco-logs:
+  umbraco-media:
